@@ -20,8 +20,7 @@ int main()
     break;
   case MEDIUM:
     // case 2:
-    printf("Bettery status is ok\n");
-    break;
+    printf("Battery status is ok\n");
   case HIGH:
     // case 3:
     printf("You just recharded it\n");
