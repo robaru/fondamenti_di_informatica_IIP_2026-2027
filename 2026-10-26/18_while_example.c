@@ -13,6 +13,7 @@ int main()
 
   printf("Congratulations, you are %d years old\n", age);
 
+  // infinite loop
   // while (true)
   // {
   //     printf("Hello\n");
