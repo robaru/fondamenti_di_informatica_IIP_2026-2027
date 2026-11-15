@@ -1,4 +1,4 @@
-// gioco.h - funzioni pronte per scrivere un gioco nel terminale.
+// gioco.h - una libreria per scrivere un gioco nel terminale.
 //
 // Non serve leggere questo file: basta sapere cosa fanno queste cinque
 // funzioni, come per printf().
@@ -7,7 +7,7 @@
 //                                  Se il terminale è più piccolo di colonne x righe
 //                                  caratteri, stampa un messaggio ed esce.
 //   tasto_premuto();               il tasto premuto, oppure 0 se non c'è: non aspetta!
-//   torna_in_alto();               riporta il cursore in alto, per ridisegnare
+//   pulisci_schermo();             da chiamare prima di ridisegnare: il nuovo disegno copre il vecchio
 //   aspetta(millisecondi);         mette in pausa il programma
 //   fine_gioco();                  rimette a posto il terminale (una volta, alla fine)
 //
@@ -89,7 +89,7 @@ static inline void aspetta(int millisecondi)
   Sleep(millisecondi);
 }
 
-static inline void torna_in_alto(void)
+static inline void pulisci_schermo(void)
 {
   printf("\033[H");
 }
@@ -155,7 +155,9 @@ static inline void inizia_gioco(int colonne, int righe)
     signal(SIGTERM, gioco_interrotto);
     signal(SIGSEGV, gioco_interrotto);
     signal(SIGFPE, gioco_interrotto);
+#ifdef SIGWINCH
     signal(SIGWINCH, gioco_ridimensionato);
+#endif
   }
 
   printf("\033[2J\033[H\033[?25l"); // pulisce lo schermo, nasconde il cursore
@@ -185,7 +187,7 @@ static inline void aspetta(int millisecondi)
   select(0, NULL, NULL, NULL, &pausa);
 }
 
-static inline void torna_in_alto(void)
+static inline void pulisci_schermo(void)
 {
   if (gioco_finestra_cambiata)
   {

@@ -1,64 +1,85 @@
-// Jump, missione 5: lo stesso gioco, con il disegno e lo scontro in due funzioni.
+// Jump, missione 5: il disegno e lo scontro diventano due funzioni.
+// Le impostazioni escono dal main: così le vedono tutte le funzioni.
 
 #include <stdio.h>
 #include <stdbool.h>
-#include "gioco.h"
+#include "gioco.h" // libreria per lo schermo e la tastiera
+
+// impostazioni: fuori da ogni funzione, valgono in tutto il programma
+const int righe_menu = 1;
+const int righe_sfondo = 7;
+const int colonne = 30;
+
+const int altezza_giocatore = 1; // riga del giocatore a terra (sotto c'è il pavimento)
+const int colonna_giocatore = 5;
+
+const char giocatore[5] = "🐸";   // un'emoji occupa 4 byte, più il '\0'
+const char cella_vuota[3] = "  "; // due spazi, più il '\0'
+
+const char oggetto[5] = "🌵";
+const int altezza_oggetto = 1; // l'oggetto sta a terra
+
+const char tasto_salto = ' ';
+const int altezza_salto = 5;   // riga raggiunta saltando
+const int lunghezza_salto = 5; // per quanti fotogrammi resta in aria, dopo il primo
 
 // Prototipi
-void disegna(int altezza, int oggetto, int punti);
-bool scontro(int altezza, int oggetto);
+void disegna(int altezza_corrente, int colonna_oggetto, int punti, int frame);
+bool scontro(int altezza_corrente, int colonna_oggetto);
 
 int main()
 {
-  int altezza = 0;   // altezza del giocatore: 0 = a terra
-  int velocita = 0;  // positiva = sale, negativa = scende
-  int oggetto = 29; // colonna dell'oggetto: parte da destra
+  const int righe = righe_menu + righe_sfondo + 2; // + pavimento + riga dove finisce il cursore
+  inizia_gioco(colonne * 2, righe);                // ogni emoji è larga 2 colonne
+
+  int frame = 0; // quanti fotogrammi sono passati
   int punti = 0;
 
-  inizia_gioco(60, 10); // servono 60 colonne (30 caselle larghe 2) e 10 righe
+  int altezza_corrente = altezza_giocatore;
+  int frame_salto = 0; // fotogramma in cui è partito l'ultimo salto
 
-  while (true)
+  int colonna_oggetto = colonne; // parte appena fuori dallo schermo, a destra
+
+  bool collisione = false;
+
+  // si gioca finché il giocatore non tocca l'oggetto
+  while (!collisione)
   {
-    // tastiera
+    pulisci_schermo();
+
+    // giocatore: quando il salto è finito torna a terra
+    bool salto_finito = (frame - frame_salto > lunghezza_salto);
+    if (salto_finito)
+    {
+      altezza_corrente = altezza_giocatore;
+    }
+
+    // l'oggetto va verso sinistra; quando esce rientra da destra
+    colonna_oggetto--;
+    if (colonna_oggetto < 0)
+    {
+      colonna_oggetto = colonne;
+      punti++;
+    }
+
+    // tastiera: tasto_premuto() non aspetta, se non c'è un tasto dà 0
     char tasto = tasto_premuto();
     if (tasto == 'q')
     {
       break;
     }
-
-    // il salto parte solo se il giocatore è a terra
-    if (tasto == ' ' && altezza == 0)
+    else if (tasto == tasto_salto && salto_finito) // se sta già saltando, non salta di nuovo
     {
-      velocita = 3;
+      frame_salto = frame;
+      altezza_corrente = altezza_salto;
     }
 
-    // la velocità cambia l'altezza, la gravità cambia la velocità
-    altezza = altezza + velocita;
-    if (altezza > 0)
-    {
-      velocita = velocita - 1;
-    }
-    else
-    {
-      altezza = 0;
-      velocita = 0;
-    }
+    collisione = scontro(altezza_corrente, colonna_oggetto);
 
-    // l'oggetto avanza: quando esce a sinistra rientra da destra
-    oggetto--;
-    if (oggetto < 0)
-    {
-      oggetto = 29;
-      punti++;
-    }
+    disegna(altezza_corrente, colonna_oggetto, punti, frame);
 
-    disegna(altezza, oggetto, punti);
-
-    if (scontro(altezza, oggetto))
-    {
-      break;
-    }
-
+    // 80 millisecondi: circa 12 fotogrammi al secondo
+    frame++;
     aspetta(80);
   }
 
@@ -68,37 +89,42 @@ int main()
   return 0;
 }
 
-// Riceve una copia dei valori: può leggerli, ma non cambiare quelli del main
-void disegna(int altezza, int oggetto, int punti)
+// Disegna il menu, lo sfondo con giocatore e oggetto, e il pavimento
+void disegna(int altezza_corrente, int colonna_oggetto, int punti, int frame)
 {
-  torna_in_alto();
-  printf("JUMP - punti: %d (spazio per saltare, q per uscire)\n", punti);
+  printf("Menu - punti: %d - frame: %d\n", punti, frame);
 
-  // dalla riga più alta (6) fino a terra (0)
-  for (int riga = 6; riga >= 0; riga--)
+  // dalla riga più alta fino alla riga 1
+  for (int riga = righe_sfondo; riga > 0; riga--)
   {
-    for (int colonna = 0; colonna < 30; colonna++)
+    for (int colonna = 0; colonna < colonne; colonna++)
     {
-      if (riga == altezza && colonna == 5)
+      if (riga == altezza_corrente && colonna == colonna_giocatore)
       {
-        printf("🐸");
+        printf("%s", giocatore);
       }
-      else if (riga == 0 && colonna == oggetto)
+      else if (riga == altezza_oggetto && colonna == colonna_oggetto)
       {
-        printf("🌵");
+        printf("%s", oggetto);
       }
       else
       {
-        printf("  "); // due spazi: un'emoji è larga due caratteri
+        printf("%s", cella_vuota);
       }
     }
     printf("\n");
   }
-  printf("------------------------------------------------------------\n");
+
+  // pavimento
+  for (int colonna = 0; colonna < colonne; colonna++)
+  {
+    printf("--");
+  }
+  printf("\n");
 }
 
-// Vero se l'oggetto è nella colonna del giocatore e il giocatore è a terra
-bool scontro(int altezza, int oggetto)
+// Vero se giocatore e oggetto sono nella stessa riga e nella stessa colonna
+bool scontro(int altezza_corrente, int colonna_oggetto)
 {
-  return oggetto == 5 && altezza == 0;
+  return altezza_corrente == altezza_oggetto && colonna_oggetto == colonna_giocatore;
 }

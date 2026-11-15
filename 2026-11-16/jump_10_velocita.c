@@ -1,0 +1,239 @@
+// Jump, missione 10: un salto più realistico, con la velocità.
+// La rana parte con una velocità verso l'alto e la gravità la riduce a ogni fotogramma: il salto è una parabola.
+
+#include <stdio.h>
+#include <stdlib.h> // rand(), srand()
+#include <string.h> // strcpy()
+#include <time.h>   // time()
+#include <stdbool.h>
+#include "gioco.h" // libreria per lo schermo e la tastiera
+
+// impostazioni: fuori da ogni funzione, valgono in tutto il programma
+const int righe_menu = 1;
+const int righe_sfondo = 7;
+const int colonne = 30;
+
+const int altezza_giocatore = 1; // riga del giocatore a terra (sotto c'è il pavimento)
+const int colonna_giocatore = 5;
+
+const char giocatore_simbolo[5] = "🐸"; // un'emoji occupa 4 byte, più il '\0'
+const char cella_vuota[3] = "  ";       // due spazi, più il '\0'
+
+const char tasto_salto = ' ';
+const int velocita_salto = 3; // di quante righe sale nel primo fotogramma
+
+const int vite_iniziali = 3;
+const int vite_massime = 4;
+
+typedef struct
+{
+  int altezza;  // riga in cui si trova adesso
+  int velocita; // positiva = sale, negativa = scende, 0 = a terra
+} Giocatore;
+
+typedef struct
+{
+  char nome[20];
+  char simbolo[5]; // un'emoji non sta in un char: serve una stringa
+  int quota;       // la sua riga più bassa: 1 = a terra, di più = vola
+  int altezza;     // quante righe è alto
+  int punti;       // quanto vale superarlo
+  int vite;        // vite date se la rana lo tocca: -1 per i nemici, +1 per la stella
+  int colonna;     // dove si trova
+} Oggetto;
+
+// Prototipi
+Oggetto nuovo_oggetto(int colonna);
+int colonna_ultimo(Oggetto oggetti[3]);
+void disegna(Giocatore giocatore, Oggetto oggetti[3], int vite, int punti, char superato[]);
+bool scontro(Giocatore giocatore, Oggetto oggetto);
+
+int main()
+{
+  srand(time(NULL)); // partita diversa a ogni esecuzione
+
+  const int righe = righe_menu + righe_sfondo + 2; // + pavimento + riga dove finisce il cursore
+  inizia_gioco(colonne * 2, righe);                // ogni emoji è larga 2 colonne
+
+  int punti = 0;
+  char superato[20] = "nessuno"; // nome dell'ultimo oggetto superato
+  int vite = vite_iniziali;
+
+  Giocatore giocatore = {altezza_giocatore, 0}; // a terra, velocità 0
+
+  // tre oggetti a caso, a 15 colonne uno dall'altro (nemici o stelle)
+  Oggetto oggetti[3];
+  for (int i = 0; i < 3; i++)
+  {
+    oggetti[i] = nuovo_oggetto(colonne + 15 * i);
+  }
+
+  // si gioca finché restano vite
+  while (vite > 0)
+  {
+    pulisci_schermo();
+
+    // tastiera: tasto_premuto() non aspetta, se non c'è un tasto dà 0
+    char tasto = tasto_premuto();
+    if (tasto == 'q')
+    {
+      break;
+    }
+    else if (tasto == tasto_salto && giocatore.altezza == altezza_giocatore) // si salta solo da terra
+    {
+      giocatore.velocita = velocita_salto;
+    }
+
+    // la velocità cambia l'altezza...
+    giocatore.altezza = giocatore.altezza + giocatore.velocita;
+
+    // ...e la gravità cambia la velocità: in aria diminuisce di 1, a terra ci si ferma
+    if (giocatore.altezza > altezza_giocatore)
+    {
+      giocatore.velocita = giocatore.velocita - 1;
+    }
+    else
+    {
+      giocatore.altezza = altezza_giocatore;
+      giocatore.velocita = 0;
+    }
+
+    for (int i = 0; i < 3; i++)
+    {
+      oggetti[i].colonna--;
+
+      // toccato: un nemico toglie una vita, la stella ne dà una (al massimo 4).
+      // Poi sparisce, così non conta due volte e non dà punti.
+      if (scontro(giocatore, oggetti[i]))
+      {
+        vite = vite + oggetti[i].vite;
+        if (vite > vite_massime)
+        {
+          vite = vite_massime;
+        }
+        oggetti[i] = nuovo_oggetto(colonna_ultimo(oggetti) + 12 + rand() % 8);
+      }
+
+      // l'oggetto ha appena superato il giocatore
+      if (oggetti[i].colonna == colonna_giocatore - 1)
+      {
+        punti = punti + oggetti[i].punti;
+        strcpy(superato, oggetti[i].nome);
+      }
+
+      // quando esce a sinistra ne entra uno nuovo, da 12 a 19 colonne dietro l'ultimo
+      if (oggetti[i].colonna < 0)
+      {
+        oggetti[i] = nuovo_oggetto(colonna_ultimo(oggetti) + 12 + rand() % 8);
+      }
+    }
+
+    disegna(giocatore, oggetti, vite, punti, superato);
+
+    // 80 millisecondi: circa 12 fotogrammi al secondo
+    aspetta(80);
+  }
+
+  fine_gioco();
+  printf("Fine partita! Punti: %d\n", punti);
+
+  return 0;
+}
+
+// Un oggetto di un tipo scelto a caso, nella colonna indicata
+Oggetto nuovo_oggetto(int colonna)
+{
+  // i tipi: nome, simbolo, quota, altezza, punti, vite (la colonna si decide dopo)
+  Oggetto tipi[6] = {
+      {"Fungo", "🍄", 1, 1, 1, -1, 0},
+      {"Cactus", "🌵", 1, 2, 2, -1, 0},
+      {"Albero", "🌲", 1, 3, 3, -1, 0},
+      {"Ape", "🐝", 6, 1, 2, -1, 0},      // vola alla riga 6 (il salto sale di 3 righe alla volta: la 5 si salta)
+      {"Fantasma", "👻", 4, 3, 3, -1, 0}, // vola dalla riga 4 alla 6
+      {"Stella", "⭐", 4, 3, 0, +1, 0}    // vola dalla riga 4 alla 6: va presa saltando!
+    };
+
+  // l'assegnazione copia tutti i membri della struct, anche le stringhe
+  Oggetto oggetto = tipi[rand() % 6];
+  oggetto.colonna = colonna;
+
+  return oggetto;
+}
+
+// La colonna dell'oggetto più a destra: è il massimo di un array
+int colonna_ultimo(Oggetto oggetti[3])
+{
+  int massimo = oggetti[0].colonna;
+
+  for (int i = 1; i < 3; i++)
+  {
+    if (oggetti[i].colonna > massimo)
+    {
+      massimo = oggetti[i].colonna;
+    }
+  }
+
+  return massimo;
+}
+
+// Disegna il menu, lo sfondo con giocatore e oggetti, e il pavimento
+void disegna(Giocatore giocatore, Oggetto oggetti[3], int vite, int punti, char superato[])
+{
+  // un cuore pieno per ogni vita, uno vuoto fino al massimo
+  for (int i = 0; i < vite_massime; i++)
+  {
+    if (i < vite)
+    {
+      printf("💖");
+    }
+    else
+    {
+      printf("🖤");
+    }
+  }
+  printf(" punti: %d - ultimo superato: %-8s\n", punti, superato);
+
+  // dalla riga più alta fino alla riga 1
+  for (int riga = righe_sfondo; riga > 0; riga--)
+  {
+    for (int colonna = 0; colonna < colonne; colonna++)
+    {
+      char simbolo[5];
+      strcpy(simbolo, cella_vuota);
+
+      // l'oggetto occupa le righe da quota a quota + altezza - 1
+      for (int i = 0; i < 3; i++)
+      {
+        if (colonna == oggetti[i].colonna &&
+            riga >= oggetti[i].quota &&
+            riga < oggetti[i].quota + oggetti[i].altezza)
+        {
+          strcpy(simbolo, oggetti[i].simbolo);
+        }
+      }
+
+      if (riga == giocatore.altezza && colonna == colonna_giocatore)
+      {
+        strcpy(simbolo, giocatore_simbolo);
+      }
+
+      printf("%s", simbolo);
+    }
+    printf("\n");
+  }
+
+  // pavimento
+  for (int colonna = 0; colonna < colonne; colonna++)
+  {
+    printf("--");
+  }
+  printf("\n");
+}
+
+// Vero se l'oggetto è nella colonna del giocatore e il giocatore è a una delle sue righe
+bool scontro(Giocatore giocatore, Oggetto oggetto)
+{
+  return oggetto.colonna == colonna_giocatore &&
+         giocatore.altezza >= oggetto.quota &&
+         giocatore.altezza < oggetto.quota + oggetto.altezza;
+}

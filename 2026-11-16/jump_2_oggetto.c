@@ -1,58 +1,86 @@
-// Jump, missione 2: l'oggetto si muove verso sinistra e si contano i punti.
+// Jump, missione 2: un oggetto arriva da destra.
+// Quando esce a sinistra rientra da destra, e si fa un punto.
 
 #include <stdio.h>
 #include <stdbool.h>
-#include "gioco.h"
+#include "gioco.h" // libreria per lo schermo e la tastiera
 
 int main()
 {
-  int altezza = 0;   // altezza del giocatore: 0 = a terra
-  int oggetto = 29; // colonna dell'oggetto: parte da destra
+  // impostazioni: scritte una volta sola, qui in cima
+  const int righe_menu = 1;
+  const int righe_sfondo = 7;
+  const int colonne = 30;
+  const int righe = righe_menu + righe_sfondo + 2; // + pavimento + riga dove finisce il cursore
+
+  const int altezza_giocatore = 1; // riga del giocatore a terra (sotto c'è il pavimento)
+  const int colonna_giocatore = 5;
+
+  const char giocatore[5] = "🐸";   // un'emoji occupa 4 byte, più il '\0'
+  const char cella_vuota[3] = "  "; // due spazi, più il '\0'
+
+  const char oggetto[5] = "🌵";
+  const int altezza_oggetto = 1; // l'oggetto sta a terra
+
+  inizia_gioco(colonne * 2, righe); // ogni emoji è larga 2 colonne
+
+  int frame = 0; // quanti fotogrammi sono passati
   int punti = 0;
 
-  inizia_gioco(60, 10); // servono 60 colonne (30 caselle larghe 2) e 10 righe
+  int colonna_oggetto = colonne; // parte appena fuori dallo schermo, a destra
 
+  // non so quanti giri farò: while
   while (true)
   {
-    // tastiera
+    pulisci_schermo();
+
+    // l'oggetto va verso sinistra; quando esce rientra da destra
+    colonna_oggetto--;
+    if (colonna_oggetto < 0)
+    {
+      colonna_oggetto = colonne;
+      punti++;
+    }
+
+    // tastiera: tasto_premuto() non aspetta, se non c'è un tasto dà 0
     char tasto = tasto_premuto();
     if (tasto == 'q')
     {
       break;
     }
 
-    // l'oggetto avanza: quando esce a sinistra rientra da destra
-    oggetto--;
-    if (oggetto < 0)
-    {
-      oggetto = 29;
-      punti++;
-    }
+    printf("Menu - punti: %d - frame: %d\n", punti, frame);
 
-    // disegno: dalla riga più alta (6) fino a terra (0)
-    torna_in_alto();
-    printf("JUMP - punti: %d (q per uscire)\n", punti);
-    for (int riga = 6; riga >= 0; riga--)
+    // sfondo, giocatore e oggetto: dalla riga più alta fino alla riga 1
+    for (int riga = righe_sfondo; riga > 0; riga--)
     {
-      for (int colonna = 0; colonna < 30; colonna++)
+      for (int colonna = 0; colonna < colonne; colonna++)
       {
-        if (riga == altezza && colonna == 5)
+        if (riga == altezza_giocatore && colonna == colonna_giocatore)
         {
-          printf("🐸");
+          printf("%s", giocatore);
         }
-        else if (riga == 0 && colonna == oggetto)
+        else if (riga == altezza_oggetto && colonna == colonna_oggetto)
         {
-          printf("🌵");
+          printf("%s", oggetto);
         }
         else
         {
-          printf("  "); // due spazi: un'emoji è larga due caratteri
+          printf("%s", cella_vuota);
         }
       }
       printf("\n");
     }
-    printf("------------------------------------------------------------\n");
 
+    // pavimento
+    for (int colonna = 0; colonna < colonne; colonna++)
+    {
+      printf("--");
+    }
+    printf("\n");
+
+    // 80 millisecondi: circa 12 fotogrammi al secondo
+    frame++;
     aspetta(80);
   }
 
