@@ -1,6 +1,6 @@
 #include <stdio.h>
 
-// #define DEBUG
+#define SIZE 5
 #define MAX(a, b) ((a) > (b) ? (a) : (b))
 
 void printArray(const int *arr, size_t size);
@@ -10,23 +10,23 @@ int max(const int arr[], size_t size);
 
 int main()
 {
-  const unsigned size = 5;
-  int a[size] = {31, 45, 2, 67, 89};
+  //const unsigned size = 5;
+  int a[SIZE] = {31, 45, 2, 67, 89};
 
   printf("Original array:\n");
-  printArray(a, size);
+  printArray(a, SIZE);
 
-  addOne(a, size);
+  addOne(a, SIZE);
 
   printf("Array after addOne():\n");
-  printArray(a, size);
+  printArray(a, SIZE);
 
-  printf("Average value of the array: %f\n", avg(a, size));
+  printf("Average value of the array: %f\n", avg(a, SIZE));
 
   // addOne(a, size);
-  // printf("Average after addOne(): %f\n", avg(a, size));
+  // printf("Average after addOne(): %f\n", avg(a, SIZE));
 
-  int max_val = max(a, size);
+  int max_val = max(a, SIZE);
   printf("The maximum value of the array is: %d\n", max_val);
 
   return 0;
@@ -75,9 +75,7 @@ int max(const int arr[], size_t size)
   for (int i = 1; i < size; i++)
   {
     max = MAX(max, arr[i]);
-#ifdef DEBUG
-    printf("### max @ iteration %d = %d\n", i, max);
-#endif
   }
+
   return max;
 }

@@ -8,13 +8,15 @@ struct Point
 
 int main()
 {
-  // Primitive data types
-  float x = 42.0;
+  // // Primitive data types
+  float x = 42.5;
   float *pointer_to_x = &x;
 
+  printf("Address of pointer_to_x: %p\n", &pointer_to_x);
   printf("Value of pointer_to_x: %p\n", pointer_to_x);
   printf("Value pointed: %f\n", *pointer_to_x);
 
+  x += 10;
   *pointer_to_x += 10;
 
   printf("Value of x: %f\n", x);
@@ -29,22 +31,25 @@ int main()
   printf("---\n");
 
   // Structs
-  struct Point origin = {.x = 0.1, .y = 0.2};
+  struct Point origin = {.x = 0.0, .y = 0.0};
   struct Point *ptr2o = &origin;
 
   printf("Value of ptr2o: %p\n", ptr2o);
-  printf("Value pointed (x): %f\n", ptr2o->x);
-  printf("Value pointed (y): %f\n", ptr2o->y);
+  printf("Value pointed (x) - struct: %f\n", origin.x);
+  printf("Value pointed (x) - pointer: %f\n", (*ptr2o).x);
+  printf("Value pointed (x) - ->: %f\n", ptr2o->x);
   printf("---\n");
 
+
   // Double pointers
+  //   float x = 42.5;
   float *ptr2x = &x;
   float **ptr2ptr2x = &ptr2x;
 
   printf("Value of ptr2x: %p\n", ptr2x);
   printf("Value pointed by ptr2x: %f\n", *ptr2x);
-  printf("Value of ptr2ptr2x: %p\n", ptr2ptr2x);
   printf("Value pointed by ptr2ptr2x: %p\n", *ptr2ptr2x);
+  printf("Value of ptr2ptr2x: %p\n", ptr2ptr2x);
   printf("Value of x: %f\n", **ptr2ptr2x);
   printf("---\n");
 

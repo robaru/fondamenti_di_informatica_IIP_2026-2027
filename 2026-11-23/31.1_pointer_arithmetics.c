@@ -1,25 +1,31 @@
 #include <stdio.h>
 
+#define SIZE 3
+
 int main()
 {
-  const unsigned size = 3;
-  int arr[size] = {10, 100, 1000};
+  //const unsigned size = 3;
+  int arr[SIZE] = {10, 100, 1000};
 
   int *ptr1 = arr;
 
   // Increment / decrement
-  for (int i = 0; i < size; i++)
+  for (int i = 0; i < SIZE; i++)
   {
-    printf("Value of *ptr1: %d\n", *ptr1);
-    printf("Value of ptr1: %p\n", ptr1);
+    //printf("Value: %d\n", arr[i]);
+    printf("%d - Value of *ptr1: %d\n", i, *ptr1);
+    printf("%d - Value of ptr1: %p\n", i, ptr1);
     ptr1++;
   }
+
+  printf("Value of ptr1: %p\n", ptr1);
+  printf("Value of *ptr1: %d\n", *ptr1); // non inizializzato - esterno all'array
 
   ptr1 -= 2;
   printf("Value of *ptr1: %d\n", *ptr1);
 
   // Pointer subtraction
-  int *ptr2 = &arr[size - 1];
+  int *ptr2 = &arr[SIZE - 1];
   int diff = ptr1 - ptr2;
   printf("Diff: %d\n", diff);
 

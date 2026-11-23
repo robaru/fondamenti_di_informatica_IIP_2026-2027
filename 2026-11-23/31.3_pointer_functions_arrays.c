@@ -1,8 +1,10 @@
 #include <stdio.h>
 
-void addOne(int arr[5])
+#define SIZE 5
+
+void addOne(int arr[SIZE])
 {
-    for (int i = 0; i < 5; ++i)
+    for (int i = 0; i < SIZE; ++i)
     {
         arr[i] = arr[i] + 1;
     }
@@ -27,34 +29,31 @@ void addOne_pointer(int *p_arr, size_t size)
 
 int main()
 {
-    int a[5] = {1, 2, 3, 4, 5};
+    int a[SIZE] = {1, 2, 3, 4, 5};
     addOne(a);
 
-    for (int i = 0; i < 5; ++i)
+    for (int i = 0; i < SIZE; ++i)
     {
         printf("%i\n", a[i]);
     }
 
     printf("Using size -----------\n");
 
-    addOne_size(a, 5);
+    addOne_size(a, SIZE);
 
-    for (int i = 0; i < 5; ++i)
+    for (int i = 0; i < SIZE; ++i)
     {
         printf("%i\n", a[i]);
     }
 
     printf("Using pointer -----------\n");
 
-    addOne_pointer(a, 5);
+    addOne_pointer(a, SIZE);
 
-    for (int i = 0; i < 5; ++i)
+    for (int i = 0; i < SIZE; ++i)
     {
         printf("%i\n", a[i]);
     }
-
-
-
 
     return 0;
 }
